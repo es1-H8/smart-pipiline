@@ -1,0 +1,150 @@
+# Echidna Configuration for Smart Contract Fuzz Testing
+# This file configures Echidna to perform comprehensive fuzz testing
+
+# Test mode configuration
+testMode: assertion
+testLimit: 50000
+corpusDir: corpus
+coverage: true
+
+# Contract-specific configurations
+contracts:
+  # SampleToken contract testing
+  SampleToken:
+    # Test basic ERC20 functionality
+    - name: "transfer_should_not_revert"
+      function: "transfer(address,uint256)"
+      args: ["[0x1000,0x2000,0x3000,0x4000,0x5000]", "[1,100,1000,10000,100000]"]
+    
+    - name: "mint_should_not_revert"
+      function: "mint(address,uint256)"
+      args: ["[0x1000,0x2000,0x3000,0x4000,0x5000]", "[1,100,1000,10000,100000]"]
+    
+    - name: "burn_should_not_revert"
+      function: "burn(uint256)"
+      args: ["[1,100,1000,10000,100000]"]
+    
+    - name: "pause_unpause_should_work"
+      function: "pause()"
+      args: []
+    
+    - name: "unpause_should_work"
+      function: "unpause()"
+      args: []
+
+  # TimelockWallet contract testing
+  TimelockWallet:
+    # Test deposit functionality
+    - name: "deposit_should_not_revert"
+      function: "deposit()"
+      args: []
+      value: "[0.001,0.01,0.1,1,10]"
+    
+    # Test withdrawal request
+    - name: "requestWithdrawal_should_not_revert"
+      function: "requestWithdrawal(uint256,uint256)"
+      args: ["[0.001,0.01,0.1,1,10]", "[3600,7200,86400,604800,2592000]"]
+    
+    # Test withdrawal execution
+    - name: "executeWithdrawal_should_not_revert"
+      function: "executeWithdrawal(uint256)"
+      args: ["[0,1,2,3,4]"]
+    
+    # Test withdrawal cancellation
+    - name: "cancelWithdrawal_should_not_revert"
+      function: "cancelWithdrawal(uint256)"
+      args: ["[0,1,2,3,4]"]
+    
+    # Test emergency functions
+    - name: "pause_should_not_revert"
+      function: "pause()"
+      args: []
+    
+    - name: "unpause_should_not_revert"
+      function: "unpause()"
+      args: []
+
+# Global testing parameters
+deployer: "0x10000"
+sender: ["0x10000", "0x20000", "0x30000", "0x40000", "0x50000"]
+
+# Gas and transaction limits
+gasLimit: 8000000
+gasPrice: 20000000000
+
+# Coverage and analysis settings
+coverage: true
+format: text
+contractAddr: "0x00a329c0648769A73afAc7F9381E08FB43dBEA72"
+
+# Mutation and generation settings
+mutation: true
+generation: true
+corpusDir: corpus
+coverage: true
+
+# Test sequence configuration
+sequence: true
+sequences: 100
+
+# Assertion testing
+assertion: true
+assertionMode: assertion
+
+# Property testing
+property: true
+propertyMode: assertion
+
+# Invariant testing
+invariant: true
+invariantMode: assertion
+
+# Custom test sequences
+customSequences:
+  - name: "token_lifecycle"
+    steps:
+      - function: "mint(address,uint256)"
+        args: ["0x1000", "1000"]
+      - function: "transfer(address,uint256)"
+        args: ["0x2000", "500"]
+      - function: "burn(uint256)"
+        args: ["100"]
+  
+  - name: "wallet_lifecycle"
+    steps:
+      - function: "deposit()"
+        value: "1"
+      - function: "requestWithdrawal(uint256,uint256)"
+        args: ["0.5", "3600"]
+      - function: "cancelWithdrawal(uint256)"
+        args: ["0"]
+
+# Coverage goals
+coverageGoals:
+  - "SampleToken.transfer"
+  - "SampleToken.mint"
+  - "SampleToken.burn"
+  - "SampleToken.pause"
+  - "SampleToken.unpause"
+  - "TimelockWallet.deposit"
+  - "TimelockWallet.requestWithdrawal"
+  - "TimelockWallet.executeWithdrawal"
+  - "TimelockWallet.cancelWithdrawal"
+  - "TimelockWallet.pause"
+  - "TimelockWallet.unpause"
+
+# Performance settings
+performance:
+  maxGas: 8000000
+  maxTime: 300
+  maxTransactions: 1000
+  maxBlocks: 10000
+
+# Reporting configuration
+report:
+  format: ["text", "json"]
+  output: "echidna-report"
+  verbose: true
+  coverage: true
+  gas: true
+  time: true 
