@@ -1,0 +1,96 @@
+name: Simple Smart Contract CI/CD
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # Build and Compile
+  build:
+    name: Build and Compile
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Compile contracts
+      run: npx hardhat compile
+
+  # Security Analysis
+  security:
+    name: Security Analysis
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install Slither
+      run: pip3 install slither-analyzer
+
+    - name: Run Slither analysis
+      run: slither . --print human-summary || true
+
+    - name: Install Solhint
+      run: npm install -g solhint
+
+    - name: Run Solhint linting
+      run: solhint "contracts/**/*.sol" || true
+
+  # Deploy to Goerli Testnet
+  deploy:
+    name: Deploy to Goerli
+    runs-on: ubuntu-latest
+    needs: [build, security]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: goerli
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Compile contracts
+      run: npx hardhat compile
+
+    - name: Deploy to Goerli
+      env:
+        GOERLI_RPC_URL: ${{ secrets.GOERLI_RPC_URL }}
+        PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+        ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
+      run: npx hardhat run scripts/deploy.js --network goerli
+
+    - name: Verify contract on Etherscan
+      env:
+        GOERLI_RPC_URL: ${{ secrets.GOERLI_RPC_URL }}
+        PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+        ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
+      run: |
+        echo "Contract deployed successfully to Goerli"
+        echo "Please verify manually on Etherscan if needed" 

@@ -59,6 +59,16 @@ jobs:
         flags: unittests
         name: codecov-umbrella
 
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-artifacts
+        path: |
+          artifacts/
+          cache/
+          coverage/
+        retention-days: 30
+
   # Job 2: Security Analysis
   security-analysis:
     name: Security Analysis
@@ -96,6 +106,14 @@ jobs:
     - name: Run Solhint linting
       run: solhint "contracts/**/*.sol" || true
 
+    - name: Upload security artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: security-artifacts
+        path: |
+          slither.sarif
+        retention-days: 30
+
   # Job 3: Fuzz Testing
   fuzz-testing:
     name: Fuzz Testing
@@ -131,6 +149,14 @@ jobs:
         echidna-test contracts --contract SampleToken --config echidna.yml || true
         echidna-test contracts --contract TimelockWallet --config echidna.yml || true
 
+    - name: Upload fuzz testing artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: fuzz-artifacts
+        path: |
+          echidna-*.txt
+        retention-days: 30
+
   # Job 4: Gas Analysis
   gas-analysis:
     name: Gas Analysis
@@ -159,6 +185,14 @@ jobs:
         export COINMARKETCAP_API_KEY=${{ secrets.COINMARKETCAP_API_KEY }}
         npx hardhat test --network localhost
 
+    - name: Upload gas analysis artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: gas-artifacts
+        path: |
+          gas-report.txt
+        retention-days: 30
+
   # Job 5: Contract Size Analysis
   contract-size:
     name: Contract Size Analysis
@@ -183,6 +217,14 @@ jobs:
 
     - name: Check contract sizes
       run: npx hardhat size-contracts
+
+    - name: Upload size analysis artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: size-artifacts
+        path: |
+          size-report.txt
+        retention-days: 30
 
   # Job 6: Deploy to Testnet (Goerli)
   deploy-goerli:
@@ -275,19 +317,44 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Download artifacts from build job
+    - name: Download build artifacts
       uses: actions/download-artifact@v4
       with:
         name: build-artifacts
-        path: ./artifacts
+        path: ./build-artifacts
 
-    - name: Upload build artifacts
+    - name: Download security artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: security-artifacts
+        path: ./security-artifacts
+
+    - name: Download fuzz artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: fuzz-artifacts
+        path: ./fuzz-artifacts
+
+    - name: Download gas artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: gas-artifacts
+        path: ./gas-artifacts
+
+    - name: Download size artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: size-artifacts
+        path: ./size-artifacts
+
+    - name: Upload all artifacts
       uses: actions/upload-artifact@v4
       with:
         name: smart-contract-artifacts
         path: |
-          artifacts/
-          cache/
-          slither.sarif
-          coverage/
+          build-artifacts/
+          security-artifacts/
+          fuzz-artifacts/
+          gas-artifacts/
+          size-artifacts/
         retention-days: 30 
