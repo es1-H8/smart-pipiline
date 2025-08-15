@@ -4,6 +4,7 @@
   "description": "Simple CI/CD pipeline for smart contract development using GitHub Actions",
   "main": "index.js",
   "scripts": {
+    "test": "hardhat test",
     "compile": "hardhat compile",
     "deploy:goerli": "hardhat run scripts/deploy.js --network goerli"
   },
